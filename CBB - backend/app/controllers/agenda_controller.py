@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import text, DateTime
 from sqlalchemy.orm import Session
 from sqlalchemy.engine import Result
 from app.models.agenda import Agenda
@@ -83,12 +83,14 @@ def crear_agenda(
         # =========================================================
         
         # Se crea el objeto ORM con valores del schema
+        estado = getattr(datos, "estado_agenda", None) or "pendiente"
         agenda = Agenda(
             id_cliente=datos.id_cliente,
             precio_total=float(disponibilidad.precio_servicio),
-            estado_agenda=datos.estado_agenda if getattr(datos, "estado_agenda", None) else "pendiente"
-            "getattr se usa para asegurar que si el esquema enviado no incluye estado_agenda"
-            "el backend no colapse y le asigne el valor 'pendiente' por defecto"
+            estado_agenda=datos.estado_agenda if getattr(datos, "estado_agenda", None) else "pendiente",
+            #getattr se usa para asegurar que si el esquema enviado no incluye estado_agenda
+            #el backend no colapse y le asigne el valor 'pendiente' por defecto
+            fecha_creacion_agenda=DateTime.now()
         )
 
         # Guarda en la base de datos
@@ -113,7 +115,7 @@ def crear_agenda(
     # =====================================================
         sql_update_disp = text("""
             UPDATE disponibilidad
-            SET estado = 'ocupado'
+            SET estado_disponibilidad = 'ocupado'
             WHERE id_disponibilidad = :id_disponibilidad
         """)
         db.execute(sql_update_disp, {"id_disponibilidad": disponibilidad.id_disponibilidad})
@@ -145,16 +147,16 @@ def estructurar_agendas(resultado: Result) -> list:
                 "id_agenda": id_agenda,
                 "estado_agenda": item["estado_agenda"],
                 "precio_total": float(item["precio_total"]) if item.get("precio_total") is not None else 0.0,
-                "fecha_creacion_agenda": item["fecha_creacion_agenda"].isoformat() if item.get("fecha_creacion_agenda") else None,
-                "fecha_cita": str(item["fecha"]) if item.get("fecha") else None,
-                "hora_cita": str(item["hora"]) if item.get("hora") else None,
+                "fecha_creacion_agenda": item["fecha_creacion_agenda"].isoformat() if item.get("fecha_creacion_agenda") is not None else None,
+                "fecha_agenda": str(item["fecha_disponibilidad"]) if item.get("fecha_disponibilidad") else None,
+                "hora_agenda": str(item["hora_inicio_disponibilidad"]) if item.get("hora_inicio_disponibilidad") else None,
                 "cliente": {
                     "id": item["id_cliente"],
-                    "nombre": f"{item['nombre_cliente']} {item['apellidos_cliente']}".strip()
+                    "nombre": f"{item['nombres_cliente']} {item['apellidos_cliente']}".strip()
                 },
                 "especialista": {
                     "id": item["id_especialista"],
-                    "nombre": f"{item['nombre_especialista']} {item['apellidos_especialista']}".strip()
+                    "nombre": f"{item['nombres_especialista']} {item['apellidos_especialista']}".strip()
                 },
                 "servicios": []
             }
@@ -185,6 +187,7 @@ def obtener_citas_especialista(
             -- =============================================
 
             a.id_agenda,
+            a.id_cliente,
             a.estado_agenda,
             a.precio_total,
             a.fecha_creacion_agenda,
@@ -230,18 +233,18 @@ def obtener_citas_especialista(
             ON sd.id_servicios =
                s.id_servicios
 
-        INNER JOIN disponiilidad disp
+        INNER JOIN disponibilidad disp
             ON sd.id_disponibilidad =
                disp.id_disponibilidad
 
-        INNER JOIN usuario esp
-            ON disp.id_usuario =
-               esp.id_usuario
+        INNER JOIN usuario esp 
+            ON disp.id_especialista = 
+            esp.id_usuario
         
         INNER JOIN usuario cli
             ON a.id_cliente =
                cli.id_usuario
-        WHERE disp.id_usuario = :id_especialista
+        WHERE disp.id_especialista = :id_especialista
 
         ORDER BY
             disp.fecha_disponibilidad DESC,
@@ -281,7 +284,7 @@ def obtener_agendas_por_cliente(
             disp.fecha_disponibilidad,
             disp.hora_inicio_disponibilidad,
             esp.id_usuario AS id_especialista,
-            esp.nombres_usuario AS nombre_especialista,
+            esp.nombres_usuario AS nombres_especialista,
             esp.apellidos_usuario AS apellidos_especialista,
 
             -- SERVICIO
@@ -307,7 +310,7 @@ def obtener_agendas_por_cliente(
             disp.id_disponibilidad
 
         INNER JOIN usuario esp 
-            ON disp.id_usuario = 
+            ON disp.id_especialista = 
             esp.id_usuario
 
         INNER JOIN usuario cli 
@@ -341,7 +344,7 @@ def obtener_agendas_por_fecha(
             a.fecha_creacion_agenda,
 
             -- CLIENTE
-            cli.nombres_usuario AS nombre_cliente,
+            cli.nombres_usuario AS nombres_cliente,
             cli.apellidos_usuario AS apellidos_cliente,
 
             -- DISPONIBILIDAD Y ESPECIALISTA
@@ -349,7 +352,7 @@ def obtener_agendas_por_fecha(
             disp.fecha_disponibilidad,
             disp.hora_inicio_disponibilidad,
             esp.id_usuario AS id_especialista,
-            esp.nombres_usuario AS nombre_especialista,
+            esp.nombres_usuario AS nombres_especialista,
             esp.apellidos_usuario AS apellidos_especialista,
 
             -- SERVICIO
@@ -375,7 +378,7 @@ def obtener_agendas_por_fecha(
             disp.id_disponibilidad
 
         INNER JOIN usuario esp 
-            ON disp.id_usuario = 
+            ON disp.id_especialista = 
             esp.id_usuario
 
         INNER JOIN usuario cli 
