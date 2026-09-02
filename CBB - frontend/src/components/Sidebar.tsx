@@ -1,6 +1,12 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const ROL_ETIQUETA: Record<string, string> = {
+  cliente: 'Cliente',
+  especialista: 'Especialista',
+  admin: 'Administrador',
+};
+
 function Sidebar() {
   const navigate = useNavigate();
   const { usuario, cerrarSesion } = useAuth();
@@ -18,6 +24,9 @@ function Sidebar() {
         {usuario && (
           <p className="sidebar-usuario">
             {usuario.nombres} {usuario.apellidos}
+            <span className="sidebar-rol">
+              {ROL_ETIQUETA[usuario.rol] ?? usuario.rol}
+            </span>
           </p>
         )}
       </div>
@@ -25,27 +34,33 @@ function Sidebar() {
       <nav className="sidebar-menu">
 
         <NavLink to="/inicio">
-          🏠 Inicio
+          🏠 <span>Inicio</span>
         </NavLink>
 
         <NavLink to="/chat">
-          🤖 ChatBot
+          🤖 <span>ChatBot</span>
         </NavLink>
 
         <NavLink to="/citas">
-          📅 Citas
+          📅 <span>Citas</span>
         </NavLink>
 
         <NavLink to="/servicios">
-          ✂️ Servicios
+          ✂️ <span>Servicios</span>
         </NavLink>
 
+        {usuario?.rol === 'admin' && (
+          <NavLink to="/usuarios">
+            👥 <span>Equipo</span>
+          </NavLink>
+        )}
+
         <NavLink to="/perfil">
-          👤 Perfil
+          👤 <span>Perfil</span>
         </NavLink>
 
         <NavLink to="/contacto">
-          📞 Contacto
+          📞 <span>Contacto</span>
         </NavLink>
 
       </nav>
@@ -56,7 +71,7 @@ function Sidebar() {
           className="sidebar-logout"
           onClick={manejarCerrarSesion}
         >
-          🚪 Cerrar sesión
+          🚪 <span>Cerrar sesión</span>
         </button>
       </div>
 
