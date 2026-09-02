@@ -30,6 +30,7 @@ const PASOS_BIENVENIDA = [
 function Inicio() {
   const navigate = useNavigate();
   const { usuario } = useAuth();
+  const esCliente = usuario?.rol === 'cliente';
 
   return (
     <Layout>
@@ -47,10 +48,14 @@ function Inicio() {
         </p>
 
         <div className="bienvenida-acciones">
-          <Button variant="success" onClick={() => navigate('/citas')}>
-            Ver mis citas
+          {esCliente && (
+            <Button variant="success" onClick={() => navigate('/citas/nueva')}>
+              Agendar cita
+            </Button>
+          )}
+          <Button variant={esCliente ? 'outline' : 'success'} onClick={() => navigate('/citas')}>
+            Ver citas
           </Button>
-
           <Button variant="outline" onClick={() => navigate('/servicios')}>
             Ver servicios
           </Button>

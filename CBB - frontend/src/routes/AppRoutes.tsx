@@ -6,9 +6,11 @@ import Inicio from '../pages/Inicio';
 
 import Chat from '../pages/Chat';
 import Citas from '../pages/Citas';
+import NuevaCita from '../pages/NuevaCita';
 import Servicios from '../pages/Servicios';
 import Perfil from '../pages/Perfil';
 import Contacto from '../pages/Contacto';
+import Equipo from '../pages/Equipo';
 
 import RutaProtegida from './RutaProtegida';
 
@@ -50,10 +52,28 @@ function AppRoutes() {
         />
 
         <Route
+          path="/citas/nueva"
+          element={
+            <RutaProtegida>
+              <NuevaCita />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
           path="/servicios"
           element={
             <RutaProtegida>
               <Servicios />
+            </RutaProtegida>
+          }
+        />
+
+        <Route
+          path="/usuarios"
+          element={
+            <RutaProtegida>
+              <Equipo />
             </RutaProtegida>
           }
         />

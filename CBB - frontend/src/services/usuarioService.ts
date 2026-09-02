@@ -21,6 +21,11 @@ export const obtenerEspecialistas = async (): Promise<Usuario[]> => {
   return data.data;
 };
 
+export const obtenerAdministradores = async (): Promise<Usuario[]> => {
+  const { data } = await api.get<ApiResponse<Usuario[]>>('/usuarios/administradores');
+  return data.data;
+};
+
 export const obtenerUsuarioPorId = async (
   idUsuario: string
 ): Promise<Usuario> => {
